@@ -59,6 +59,14 @@ while se_ejecuta:
     # 2. ACTUALIZACIÓN DE LÓGICA (Fuera del for de eventos)
     repartidor_x += repartidor_cambio_x
     repartidor_y += repartidor_cambio_y
+    if repartidor_x < 0:
+        repartidor_x = 0
+    elif repartidor_x > 736:
+        repartidor_x = 736
+    if repartidor_y < 0:
+        repartidor_y = 0
+    elif repartidor_y > 500:
+        repartidor_y = 500
 
     # 3. DIBUJO EN PANTALLA (Fuera del for de eventos)
     pantalla.blit(fondo, (0, 0))
