@@ -108,6 +108,34 @@ def dibujar_pizza(x, y):
     pantalla.blit(pizza_img, (x, y))
 
 
+def detectar_colisiones():
+    global perros, pizzas
+    pizzas_sobrevivientes = []
+
+
+    #Inicializamos perros_sobrevivientes como una copia exacta de los perros actuales
+    perros_sobrevivientes = perros[:]
+
+    for pizza_actual in pizzas:
+        pizza_choco = False
+        for perro_actual in perros_sobrevivientes[:]:
+            dx = perro_actual[0] - pizza_actual[0]
+            dy = perro_actual[1] - pizza_actual[1]
+            distancia = (dx ** 2 + dy ** 2) ** 0.5
+
+            # La indentación ahora está dentro del ciclo del perro
+            if distancia < 27:
+                perros_sobrevivientes.remove(perro_actual)
+                pizza_choco = True
+                break
+
+        if not pizza_choco:
+            pizzas_sobrevivientes.append(pizza_actual)
+
+    pizzas = pizzas_sobrevivientes
+    perros = perros_sobrevivientes
+
+
 # Reloj para controlar los FPS
 reloj = pygame.time.Clock()
 
@@ -136,7 +164,6 @@ while se_ejecuta:
             if evento.key in (pygame.K_UP, pygame.K_DOWN):
                 repartidor_cambio_y = 0
 
-    # CORREGIDO: Toda la lógica y dibujo ahora están correctamente indentados dentro del while
     # 2. ACTUALIZACIÓN DE LÓGICA
     repartidor_x += repartidor_cambio_x
     repartidor_y += repartidor_cambio_y
@@ -184,6 +211,9 @@ while se_ejecuta:
         for pizza_actual in pizzas
         if -32 <= pizza_actual[0] <= 800 and -32 <= pizza_actual[1] <= 600
     ]
+
+    # Llamar a la función de colisiones antes de dibujar
+    detectar_colisiones()
 
     # 3. DIBUJO EN PANTALLA
     pantalla.blit(fondo, (0, 0))
