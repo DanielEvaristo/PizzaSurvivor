@@ -1,4 +1,5 @@
 import pygame
+import random
 
 # Inicializar pygame
 pygame.init()
@@ -22,10 +23,19 @@ repartidor_cambio_x = 0
 repartidor_cambio_y = 0
 repartidor_velocidad = 5  # Subimos la velocidad base para que se sienta fluido a 60 FPS
 
+#Perro
+perro_img = pygame.image.load("assets/perro.png")
+perro_img = pygame.transform.scale(perro_img, (54, 54))
+perro_x = random.randint(0, 746)
+perro_y = 0
+velocidad_perro = 3
+
 
 def repartir(x, y):
     pantalla.blit(repartidor_img, (x, y))
 
+def perro(x, y):
+    pantalla.blit(perro_img, (x, y))
 
 # Reloj para controlar los FPS (Fotogramas por segundo)
 reloj = pygame.time.Clock()
@@ -68,10 +78,19 @@ while se_ejecuta:
     elif repartidor_y > 500:
         repartidor_y = 500
 
+    #Movimiento del perro
+    dx = repartidor_x - perro_x
+    dy = repartidor_y - perro_y
+    distancia = (dx**2 + dy**2)**0.5
+    if distancia > 0:
+        perro_x += (dx / distancia) * velocidad_perro
+        perro_y += (dy / distancia) * velocidad_perro
+
+
     # 3. DIBUJO EN PANTALLA (Fuera del for de eventos)
     pantalla.blit(fondo, (0, 0))
     repartir(repartidor_x, repartidor_y)
-
+    perro(perro_x, perro_y)
     pygame.display.update()
 
     # Controlar que el juego corra a 60 cuadros por segundo
