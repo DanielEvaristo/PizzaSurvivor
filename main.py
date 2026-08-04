@@ -30,7 +30,7 @@ velocidad_perro = 3
 perros = []
 
 tiempo_ultimo_perro = 0
-intervalo_perro = 3000
+intervalo_perro = 2000
 
 # Pizza
 pizza_img = pygame.image.load("assets/pizza.png")
@@ -38,7 +38,14 @@ pizza_img = pygame.transform.scale(pizza_img, (32, 32))
 pizzas = []
 velocidad_pizza = 8
 tiempo_ultima_pizza = 0
-intervalo_pizza = 1000
+intervalo_pizza = 3000
+
+# Vidas
+corazon_img = pygame.image.load("assets/corazon.png")
+corazon_img = pygame.transform.scale(corazon_img, (32, 32))
+vidas = 3
+tiempo_ultimo_golpe = 0
+duracion_invulnerabilidad = 1000  # 1 segundo exacto
 
 
 def repartir(x, y):
@@ -47,6 +54,11 @@ def repartir(x, y):
 
 def perro(x, y):
     pantalla.blit(perro_img, (x, y))
+
+
+def dibujar_vidas():
+    for i in range(vidas):
+        pantalla.blit(corazon_img, (10 + i * 38, 10))
 
 
 # NUEVA FUNCIÓN: Genera un perro en un borde aleatorio de la pantalla
@@ -109,13 +121,11 @@ def dibujar_pizza(x, y):
 
 
 def detectar_colisiones():
-    global perros, pizzas
+    global perros, pizzas, vidas, tiempo_ultimo_golpe
     pizzas_sobrevivientes = []
-
-
-    #Inicializamos perros_sobrevivientes como una copia exacta de los perros actuales
     perros_sobrevivientes = perros[:]
 
+    # 1. COLISIÓN: PIZZAS CON PERROS
     for pizza_actual in pizzas:
         pizza_choco = False
         for perro_actual in perros_sobrevivientes[:]:
@@ -123,7 +133,6 @@ def detectar_colisiones():
             dy = perro_actual[1] - pizza_actual[1]
             distancia = (dx ** 2 + dy ** 2) ** 0.5
 
-            # La indentación ahora está dentro del ciclo del perro
             if distancia < 27:
                 perros_sobrevivientes.remove(perro_actual)
                 pizza_choco = True
@@ -131,6 +140,32 @@ def detectar_colisiones():
 
         if not pizza_choco:
             pizzas_sobrevivientes.append(pizza_actual)
+
+    # 2. COLISIÓN: PERROS CON REPARTIDOR
+    tiempo_actual = pygame.time.get_ticks()
+    invulnerable = tiempo_actual - tiempo_ultimo_golpe < duracion_invulnerabilidad
+
+    # Si NO somos invulnerables, revisamos si un perro nos toca
+    if not invulnerable:
+        # Obtenemos el centro aproximado del repartidor (caja de 64x100)
+        centro_repartidor_x = repartidor_x + 32
+        centro_repartidor_y = repartidor_y + 50
+
+        for perro_actual in perros_sobrevivientes[:]:
+            # Centro aproximado del perro (caja de 54x54)
+            centro_perro_x = perro_actual[0] + 27
+            centro_perro_y = perro_actual[1] + 27
+
+            dx = centro_repartidor_x - centro_perro_x
+            dy = centro_repartidor_y - centro_perro_y
+            distancia = (dx ** 2 + dy ** 2) ** 0.5
+
+            # Si la distancia es menor a un radio combinado (ej. 45 píxeles)
+            if distancia < 45:
+                vidas -= 1
+                tiempo_ultimo_golpe = tiempo_actual
+                perros_sobrevivientes.remove(perro_actual) # El perro que te golpea desaparece
+                break # Salimos del ciclo para no perder más de 1 vida en el mismo frame
 
     pizzas = pizzas_sobrevivientes
     perros = perros_sobrevivientes
@@ -180,7 +215,7 @@ while se_ejecuta:
 
     tiempo_actual = pygame.time.get_ticks()
 
-    # Crear un nuevo perro cada 3 segundos
+    # Crear un nuevo perro cada 2 segundos
     if tiempo_actual - tiempo_ultimo_perro >= intervalo_perro:
         crear_perro()
         tiempo_ultimo_perro = tiempo_actual
@@ -195,7 +230,7 @@ while se_ejecuta:
             perro_actual[0] += (dx / distancia) * velocidad_perro
             perro_actual[1] += (dy / distancia) * velocidad_perro
 
-    # Lanzar una pizza cada segundo hacia el perro más cercano
+    # Lanzar una pizza cada 3 segundos hacia el perro más cercano
     if tiempo_actual - tiempo_ultima_pizza >= intervalo_pizza:
         lanzar_pizza()
         tiempo_ultima_pizza = tiempo_actual
@@ -217,13 +252,20 @@ while se_ejecuta:
 
     # 3. DIBUJO EN PANTALLA
     pantalla.blit(fondo, (0, 0))
-    repartir(repartidor_x, repartidor_y)
+
+    invulnerable = tiempo_actual - tiempo_ultimo_golpe < duracion_invulnerabilidad
+
+    # El repartidor solo se dibuja si no es invulnerable, O si lo es, hace el efecto intermitente (titilar)
+    if not invulnerable or (tiempo_actual // 150) % 2 == 0:
+        repartir(repartidor_x, repartidor_y)
 
     for perro_actual in perros:
         perro(perro_actual[0], perro_actual[1])
 
     for pizza_actual in pizzas:
         dibujar_pizza(pizza_actual[0], pizza_actual[1])
+
+    dibujar_vidas()
 
     pygame.display.update()
 
